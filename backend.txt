@@ -1,0 +1,48 @@
+backend/
+│
+├── app/
+│   │
+│   ├── main.py
+│   │
+│   ├── api/
+│   │   ├── incidents.py
+│   │   ├── logs.py
+│   │   ├── metrics.py
+│   │   └── analysis.py
+│   │
+│   ├── models/
+│   │   ├── incident.py
+│   │   ├── log.py
+│   │   └── metric.py
+│   │
+│   ├── schemas/
+│   │   ├── incident.py
+│   │   └── analysis.py
+│   │
+│   ├── services/
+│   │   ├── incident_service.py
+│   │   ├── retrieval_service.py
+│   │   └── analysis_service.py
+│   │
+│   ├── ml/
+│   │   ├── train.py
+│   │   ├── features.py
+│   │   ├── predict.py
+│   │   └── model.pkl
+│   │
+│   ├── ai/
+│   │   ├── embeddings.py
+│   │   ├── retrieval.py
+│   │   ├── rag.py
+│   │   └── llm.py
+│   │
+│   ├── database/
+│   │   ├── connection.py
+│   │   └── ...
+│   │
+│   └── evaluation/
+│       ├── ml_evaluation.py
+│       ├── retrieval_evaluation.py
+│       └── rag_evaluation.py
+│
+└── tests/
