@@ -1,8 +1,8 @@
 # Imports tools for creating API endpoints, handling errors, and database dependencies.
 from fastapi import APIRouter, HTTPException, Depends
 
-# Imports the schema used to validate incoming incident data.
-from app.schemas import IncidentCreate
+# Imports schemas for validating incoming data and outgoing responses.
+from app.schemas import IncidentCreate, IncidentResponse
 
 # Imports the database dependency.
 from app.database.connection import get_db
@@ -15,9 +15,10 @@ from app.models import Incident
 router = APIRouter()
 
 
-# Registers an endpoint to retrieve all incidents.
-@router.get("/incidents")
+# Returns a list of incidents using the response schema.
+@router.get("/incidents", response_model=list[IncidentResponse])
 def get_incidents(db=Depends(get_db)):
+
     # Retrieves all incidents from PostgreSQL.
     incident_records = db.query(Incident).all()
 
@@ -25,15 +26,16 @@ def get_incidents(db=Depends(get_db)):
     return incident_records
 
 
-# Registers an endpoint to retrieve one incident by ID.
-@router.get("/incidents/{incident_id}")
+# Returns one incident using the response schema.
+@router.get("/incidents/{incident_id}", response_model=IncidentResponse)
 def get_incident(incident_id: int, db=Depends(get_db)):
+
     # Searches for the requested incident in PostgreSQL.
     incident = db.query(Incident).filter(
         Incident.id == incident_id
     ).first()
 
-    # Returns an error if the incident does not exist.
+    # Returns a 404 error if the incident does not exist.
     if incident is None:
         raise HTTPException(
             status_code=404,
@@ -44,13 +46,14 @@ def get_incident(incident_id: int, db=Depends(get_db)):
     return incident
 
 
-# Registers an endpoint to create a new incident.
-@router.post("/incidents")
+# Creates a new incident and returns the response schema.
+@router.post("/incidents", response_model=IncidentResponse)
 def create_incident(
     incident_data: IncidentCreate,
     db=Depends(get_db)
 ):
-    # Creates a new incident using the validated input.
+
+    # Creates a new incident using the validated request data.
     new_incident = Incident(
         title=incident_data.title,
         severity=incident_data.severity,
@@ -58,39 +61,40 @@ def create_incident(
     )
 
     try:
-        # Adds the incident to the database session.
+        # Adds the new incident to the database session.
         db.add(new_incident)
 
         # Saves the new incident in PostgreSQL.
         db.commit()
 
-        # Retrieves the database-generated ID and saved values.
+        # Retrieves the generated ID and saved values.
         db.refresh(new_incident)
 
         # Returns the created incident.
         return new_incident
 
     except Exception:
-        # Rolls back the transaction if an error occurs.
+        # Rolls back the transaction if something goes wrong.
         db.rollback()
 
-        # Passes the error to FastAPI.
+        # Passes the original error to FastAPI.
         raise
 
 
-# Registers an endpoint to update an existing incident.
-@router.put("/incidents/{incident_id}")
+# Updates an existing incident and returns the response schema.
+@router.put("/incidents/{incident_id}", response_model=IncidentResponse)
 def update_incident(
     incident_id: int,
     updated_data: IncidentCreate,
     db=Depends(get_db)
 ):
+
     # Searches for the incident that needs updating.
     incident = db.query(Incident).filter(
         Incident.id == incident_id
     ).first()
 
-    # Returns an error if the incident does not exist.
+    # Returns a 404 error if the incident does not exist.
     if incident is None:
         raise HTTPException(
             status_code=404,
@@ -104,7 +108,7 @@ def update_incident(
         # Updates the incident severity.
         incident.severity = updated_data.severity
 
-        # Saves the changes in PostgreSQL.
+        # Saves the updated values in PostgreSQL.
         db.commit()
 
         # Refreshes the incident with the saved values.
@@ -114,32 +118,33 @@ def update_incident(
         return incident
 
     except Exception:
-        # Rolls back the transaction if an error occurs.
+        # Rolls back the transaction if something goes wrong.
         db.rollback()
 
-        # Passes the error to FastAPI.
+        # Passes the original error to FastAPI.
         raise
 
 
-# Registers an endpoint to delete an incident.
+# Deletes an incident and returns a confirmation message.
 @router.delete("/incidents/{incident_id}")
 def delete_incident(
     incident_id: int,
     db=Depends(get_db)
 ):
+
     # Searches for the incident that needs deleting.
     incident = db.query(Incident).filter(
         Incident.id == incident_id
     ).first()
 
-    # Returns an error if the incident does not exist.
+    # Returns a 404 error if the incident does not exist.
     if incident is None:
         raise HTTPException(
             status_code=404,
             detail="Incident not found"
         )
 
-    # Stores the incident details before deletion.
+    # Saves the incident details before deleting it.
     deleted_incident = {
         "id": incident.id,
         "title": incident.title,
@@ -161,8 +166,8 @@ def delete_incident(
         }
 
     except Exception:
-        # Rolls back the transaction if an error occurs.
+        # Rolls back the transaction if something goes wrong.
         db.rollback()
 
-        # Passes the error to FastAPI.
+        # Passes the original error to FastAPI.
         raise
