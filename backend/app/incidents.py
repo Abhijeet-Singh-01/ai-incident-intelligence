@@ -17,10 +17,29 @@ router = APIRouter()
 
 # Returns a list of incidents using the response schema.
 @router.get("/incidents", response_model=list[IncidentResponse])
-def get_incidents(db=Depends(get_db)):
+def get_incidents(
+    # skips this many incidents before returning results.
+    skip: int = 0,
+    # limit the maximum number of incidents returned.
+    limit: int = 10,
+    # provides the database session.
+    db=Depends(get_db),
+):
+    # prevents negative skip values and invalid limit values.
+    if skip < 0:
+        raise HTTPException(status_code=400, detail="skip cannot be negative")
+
+    if limit < 1 or limit > 1000:
+        raise HTTPException(status_code=400, detail="limit must be between 1 and 100")
+
+    #
 
     # Retrieves all incidents from PostgreSQL.
-    incident_records = db.query(Incident).all()
+    incident_records = (
+        db.query(Incident).order_by(Incident.id).offset(skip).limit(limit).all()
+    )
+
+    # returns the incidents for this page
 
     # Returns all retrieved incidents.
     return incident_records
