@@ -1,0 +1,14 @@
+.env# Ignore environment variables and secrets
+.env
+.env.*
+
+# Allow the example environment file
+!.env.example
+
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+
+# Ignore virtual environments
+venv/
+.venv/
