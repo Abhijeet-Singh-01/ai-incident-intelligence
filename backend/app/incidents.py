@@ -1,5 +1,5 @@
 # Imports tools for creating API endpoints, handling errors, and database dependencies.
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends,Query
 
 # Imports schemas for validating incoming data and outgoing responses.
 from app.schemas import IncidentCreate, IncidentResponse
@@ -15,33 +15,75 @@ from app.models import Incident
 router = APIRouter()
 
 
-# Returns a list of incidents using the response schema.
-@router.get("/incidents", response_model=list[IncidentResponse])
+# Returns incidents with optional severity filtering and pagination.
+@router.get(
+    "/incidents",
+    response_model=list[IncidentResponse]
+)
 def get_incidents(
-    # skips this many incidents before returning results.
+    # Number of incidents to skip.
     skip: int = 0,
-    # limit the maximum number of incidents returned.
+
+    # Maximum number of incidents to return.
     limit: int = 10,
-    # provides the database session.
-    db=Depends(get_db),
+
+    # Optional filter: low, medium, high, or critical.
+    severity: str | None = Query(
+        default=None,
+        description="Filter incidents by severity"
+    ),
+
+    # Provides the database session.
+    db=Depends(get_db)
 ):
-    # prevents negative skip values and invalid limit values.
+    # Validate the skip parameter.
     if skip < 0:
-        raise HTTPException(status_code=400, detail="skip cannot be negative")
+        raise HTTPException(
+            status_code=400,
+            detail="Skip cannot be negative"
+        )
 
-    if limit < 1 or limit > 1000:
-        raise HTTPException(status_code=400, detail="limit must be between 1 and 100")
+    # Validate the limit parameter.
+    if limit < 1 or limit > 100:
+        raise HTTPException(
+            status_code=400,
+            detail="Limit must be between 1 and 100"
+        )
 
-    #
+    # Define the allowed severity values.
+    allowed_severities = [
+        "low",
+        "medium",
+        "high",
+        "critical"
+    ]
 
-    # Retrieves all incidents from PostgreSQL.
+    # Reject invalid severity values.
+    if severity is not None and severity not in allowed_severities:
+        raise HTTPException(
+            status_code=400,
+            detail="Severity must be low, medium, high, or critical"
+        )
+
+    # Start a query to retrieve incidents from PostgreSQL.
+    query = db.query(Incident)
+
+    # Filter incidents if a severity was provided.
+    if severity is not None:
+        query = query.filter(
+            Incident.severity == severity
+        )
+
+    # Sort incidents by ID and apply pagination.
     incident_records = (
-        db.query(Incident).order_by(Incident.id).offset(skip).limit(limit).all()
+        query
+        .order_by(Incident.id)
+        .offset(skip)
+        .limit(limit)
+        .all()
     )
 
-    # returns the incidents for this page
-
-    # Returns all retrieved incidents.
+    # Return the matching incidents.
     return incident_records
 
 
