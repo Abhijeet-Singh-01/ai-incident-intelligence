@@ -1,0 +1,566 @@
+
+/* Sets the default styling for the entire application. */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Defines the main colors and font. */
+:root {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  color: #e8edf7;
+  background: #0b1020;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Removes the default browser margin. */
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  background: #0b1020;
+}
+
+/* Gives links a clean appearance. */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Makes form controls use the application's font. */
+button,
+input,
+select {
+  font: inherit;
+}
+
+/* Creates the sidebar and main-content layout. */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Styles the left navigation sidebar. */
+.sidebar {
+  width: 255px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 18px 20px;
+  background: #0f1629;
+  border-right: 1px solid #222b40;
+}
+
+/* Aligns the brand icon and brand text. */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 45px;
+  padding: 0 8px;
+}
+
+/* Styles the brand icon. */
+.brand-icon {
+  display: grid;
+  place-items: center;
+  width: 43px;
+  height: 43px;
+  border-radius: 12px;
+  background: #5b6cf9;
+  color: white;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+/* Styles the brand name. */
+.brand h2 {
+  font-size: 17px;
+  letter-spacing: -0.5px;
+}
+
+/* Styles the small brand description. */
+.brand p {
+  margin-top: 4px;
+  color: #8490a8;
+  font-size: 11px;
+}
+
+/* Styles the sidebar section heading. */
+.sidebar-label {
+  margin: 0 10px 14px;
+  color: #6f7c96;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+/* Arranges the navigation links vertically. */
+.navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+/* Styles each navigation link. */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 13px 12px;
+  border-radius: 9px;
+  color: #9ca8bf;
+  font-size: 13px;
+  transition: background 0.2s, color 0.2s;
+}
+
+/* Styles the navigation symbols. */
+.nav-item span {
+  width: 18px;
+  text-align: center;
+  font-size: 18px;
+}
+
+/* Highlights the selected navigation link. */
+.nav-item.active {
+  background: #202b4b;
+  color: #aab8ff;
+}
+
+/* Highlights links when the user hovers over them. */
+.nav-item:hover {
+  background: #1a2540;
+  color: #ffffff;
+}
+
+/* Positions the backend status at the bottom. */
+.sidebar-footer {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: auto;
+  padding: 16px 8px 0;
+  border-top: 1px solid #222b40;
+  color: #8490a8;
+  font-size: 11px;
+}
+
+/* Creates the small status indicator. */
+.online-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #f5b942;
+}
+
+/* Gives the main dashboard its available width. */
+.main-content {
+  flex: 1;
+  min-width: 0;
+  padding: 34px 38px;
+}
+
+/* Styles the top header. */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 27px;
+  border-bottom: 1px solid #222b40;
+}
+
+/* Styles the breadcrumb text. */
+.breadcrumb {
+  margin-bottom: 9px;
+  color: #7f8ba4;
+  font-size: 12px;
+}
+
+/* Styles the main page title. */
+.topbar h1 {
+  font-size: clamp(23px, 3vw, 29px);
+  font-weight: 650;
+  letter-spacing: -1px;
+}
+
+/* Styles the environment label. */
+.environment {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 13px;
+  border: 1px solid #29344b;
+  border-radius: 9px;
+  color: #a9b4c9;
+  font-size: 12px;
+}
+
+/* Changes the dot color for an active development environment. */
+.environment .online-dot {
+  background: #42d6a4;
+}
+
+/* Arranges the dashboard introduction. */
+.welcome-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 30px 0 22px;
+}
+
+/* Styles section headings. */
+.welcome-section h2,
+.panel-header h2 {
+  margin-bottom: 7px;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+/* Styles secondary descriptions. */
+.muted {
+  color: #8793aa;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* Styles the demo-data label. */
+.demo-label {
+  padding: 7px 10px;
+  border: 1px solid #51452b;
+  border-radius: 7px;
+  background: #2a2418;
+  color: #f3c56a;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+}
+
+/* Arranges the four summary cards. */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 17px;
+  margin-bottom: 27px;
+}
+
+/* Styles each summary card. */
+.summary-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 22px 19px;
+  border: 1px solid #263149;
+  border-radius: 13px;
+  background: #121a2e;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+/* Adds a subtle hover effect to summary cards. */
+.summary-card:hover {
+  transform: translateY(-2px);
+  border-color: #485b82;
+}
+
+/* Styles the summary card labels. */
+.summary-card .muted {
+  margin-bottom: 13px;
+  font-size: 12px;
+}
+
+/* Styles the large summary numbers. */
+.summary-card h2 {
+  font-size: clamp(24px, 2.5vw, 31px);
+  font-weight: 650;
+  letter-spacing: -1px;
+}
+
+/* Styles the icon containers. */
+.summary-icon {
+  display: grid;
+  place-items: center;
+  width: 43px;
+  height: 43px;
+  flex-shrink: 0;
+  border-radius: 11px;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+/* Gives each summary icon a distinct color. */
+.summary-icon.blue {
+  background: #202d51;
+  color: #8da8ff;
+}
+
+.summary-icon.orange {
+  background: #392b1d;
+  color: #ffbd70;
+}
+
+.summary-icon.red {
+  background: #3d202b;
+  color: #ff8296;
+}
+
+.summary-icon.green {
+  background: #19372f;
+  color: #63dfb1;
+}
+
+/* Styles the incident table container. */
+.panel {
+  overflow: hidden;
+  border: 1px solid #263149;
+  border-radius: 13px;
+  background: #121a2e;
+}
+
+/* Styles the table heading area. */
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 23px;
+  border-bottom: 1px solid #263149;
+}
+
+/* Styles the severity dropdown. */
+.panel-header select {
+  max-width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #34415b;
+  border-radius: 8px;
+  outline: none;
+  background: #182239;
+  color: #dce5f5;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* Highlights the dropdown when selected. */
+.panel-header select:focus {
+  border-color: #7185ff;
+}
+
+/* Allows the table to scroll on smaller screens. */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* Styles the incident table. */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+/* Styles table column headings. */
+thead {
+  background: #151e33;
+}
+
+th {
+  padding: 15px 23px;
+  color: #7886a1;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+/* Styles table cells. */
+td {
+  padding: 17px 23px;
+  border-top: 1px solid #222d43;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Styles incident titles. */
+td strong {
+  color: #e2e9f6;
+  font-size: 12px;
+  font-weight: 550;
+}
+
+/* Styles the incident ID beneath each title. */
+td .muted {
+  margin-top: 5px;
+  font-size: 10px;
+}
+
+/* Highlights table rows when hovered over. */
+tbody tr:hover {
+  background: #172138;
+}
+
+/* Styles severity and status labels. */
+.badge {
+  display: inline-block;
+  padding: 6px 9px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 650;
+  text-transform: capitalize;
+}
+
+/* Styles severity badges. */
+.badge.critical {
+  border-color: #65303c;
+  background: #3b202b;
+  color: #ff899c;
+}
+
+.badge.high {
+  border-color: #69462a;
+  background: #3b2b20;
+  color: #ffc17b;
+}
+
+.badge.medium {
+  border-color: #665728;
+  background: #38321e;
+  color: #f4d779;
+}
+
+.badge.low {
+  border-color: #285044;
+  background: #1b342e;
+  color: #72dcb8;
+}
+
+/* Styles the incident status badges. */
+.badge.open {
+  border-color: #65303c;
+  background: #3b202b;
+  color: #ff899c;
+}
+
+.badge.investigating {
+  border-color: #344b83;
+  background: #202d4c;
+  color: #9bb0ff;
+}
+
+.badge.resolved {
+  border-color: #285044;
+  background: #1b342e;
+  color: #72dcb8;
+}
+
+/* Styles the table footer. */
+.panel-footer {
+  padding: 15px 23px;
+  border-top: 1px solid #263149;
+  color: #8793aa;
+  font-size: 11px;
+}
+
+/* Styles the page footer. */
+.page-footer {
+  padding: 25px 0 5px;
+  color: #67748c;
+  font-size: 11px;
+  text-align: center;
+}
+
+/* Adapts the dashboard for tablets and smaller laptops. */
+@media (max-width: 1100px) {
+  .main-content {
+    padding: 28px 22px;
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sidebar {
+    width: 220px;
+  }
+}
+
+/* Adapts the dashboard for mobile screens. */
+@media (max-width: 700px) {
+  .app-layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    padding: 18px;
+    border-right: none;
+    border-bottom: 1px solid #222b40;
+  }
+
+  .brand {
+    margin-bottom: 22px;
+  }
+
+  .sidebar-label {
+    margin-top: 5px;
+  }
+
+  .navigation {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nav-item {
+    padding: 11px 9px;
+    font-size: 12px;
+  }
+
+  .sidebar-footer {
+    margin-top: 18px;
+  }
+
+  .main-content {
+    padding: 22px 15px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .welcome-section {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .summary-card {
+    padding: 19px;
+  }
+
+  .panel-header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 18px;
+  }
+
+  .panel-header select {
+    width: 100%;
+  }
+
+  th,
+  td {
+    padding: 14px 15px;
+  }
+}
