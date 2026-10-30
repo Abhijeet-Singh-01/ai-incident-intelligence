@@ -741,3 +741,107 @@ tbody tr:hover {
     flex-wrap: wrap;
   }
 }
+
+
+/* Appilcation logs section */
+.log-panel{
+  margin-top: 28px;
+}
+
+/* log header controls */
+
+.log-header-actions{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/*log statistics layout */
+
+.log-summary-card{
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap:14px;
+  margin: 20px 0;
+}
+
+/*individual log statistcs card */
+
+.log-summary-card{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid rgb(128,128,128,0.2);
+  border-radius: 10px;
+  
+}
+
+/* log statistics values */
+
+
+.log-summary-card span{
+  color: #888;
+  font-size:13px;
+}
+
+/* logs stastics values */
+
+.log-summary-card strong{
+  font-size: 25px;
+}
+
+/* Log severity badge */
+.log-badge{
+  display: inline-block;
+  padding: 5px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* INFO log */
+
+.log-badge.info{
+  background:"#dbeafe";
+  color: #1d4ed8;
+}
+
+/* warning log */
+.log-badge.error{
+  background:#fef3c7;
+  color: #92400e;
+}
+
+/* error log */
+.log-badge.error{
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* critical log */
+
+.log-badge.badge.critical{
+  background: #7f1d1d;
+  color: white;
+
+}
+
+
+/* responsive log dashboard */
+
+@media (max-width: 800){
+  .log-summary-grid{
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+
+  .log-header-actions{
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width:500px){
+  .log-summary-grid{
+    grid-template-columns: 1fr;
+  }
+}

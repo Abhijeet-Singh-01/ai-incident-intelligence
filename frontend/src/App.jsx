@@ -18,20 +18,40 @@ function SummaryCard({ label, value, icon, color }) {
   );
 }
 
-// Displays severity and status badges.
+// Displays incident severity and status badges.
 function StatusBadge({ value }) {
-  return <span className={`badge ${value}`}>{value}</span>;
+  return <span className={`badge ${value.toLowerCase()}`}>{value}</span>;
+}
+
+// Displays log severity badges.
+function LogBadge({ level }) {
+  return (
+    <span className={`log-badge ${level.toLowerCase()}`}>
+      {level}
+    </span>
+  );
+}
+
+// Formats timestamps for display.
+function formatDate(dateString) {
+  if (!dateString) return "N/A";
+
+  const date = new Date(dateString);
+
+  if (Number.isNaN(date.getTime())) return "Invalid date";
+
+  return date.toLocaleString();
 }
 
 function App() {
   // Stores incidents received from the backend.
   const [incidents, setIncidents] = useState([]);
 
-  // Controls loading and error messages.
+  // Controls incident loading and errors.
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Controls severity filtering.
+  // Controls incident severity filtering.
   const [severityFilter, setSeverityFilter] = useState("all");
 
   // Controls the create incident form.
@@ -50,6 +70,16 @@ function App() {
   const [editSeverity, setEditSeverity] = useState("low");
   const [updating, setUpdating] = useState(false);
   const [editError, setEditError] = useState("");
+
+  // Stores application logs received from FastAPI.
+  const [logs, setLogs] = useState([]);
+
+  // Controls log loading and errors.
+  const [logsLoading, setLogsLoading] = useState(true);
+  const [logsError, setLogsError] = useState("");
+
+  // Controls log severity filtering.
+  const [logLevelFilter, setLogLevelFilter] = useState("all");
 
   // Fetches incidents from FastAPI.
   async function fetchIncidents() {
@@ -76,9 +106,35 @@ function App() {
     }
   }
 
-  // Loads incidents when the dashboard opens.
+  // Fetches application logs from FastAPI.
+  async function fetchLogs() {
+    try {
+      setLogsLoading(true);
+      setLogsError("");
+
+      const response = await fetch(`${API_URL}/logs/`);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch application logs.");
+      }
+
+      const data = await response.json();
+      setLogs(data);
+    } catch (err) {
+      setLogsError(
+        err.message === "Failed to fetch"
+          ? "Cannot connect to the logs API."
+          : err.message
+      );
+    } finally {
+      setLogsLoading(false);
+    }
+  }
+
+  // Loads incidents and logs when dashboard opens.
   useEffect(() => {
     fetchIncidents();
+    fetchLogs();
   }, []);
 
   // Creates a new incident.
@@ -111,12 +167,10 @@ function App() {
         throw new Error(data.detail || "Failed to create incident.");
       }
 
-      // Reset form after successful creation.
       setNewTitle("");
       setNewSeverity("low");
       setShowForm(false);
 
-      // Refresh incident list.
       await fetchIncidents();
     } catch (err) {
       setCreateError(err.message);
@@ -149,7 +203,6 @@ function App() {
         throw new Error(data.detail || "Failed to delete incident.");
       }
 
-      // Refresh dashboard after deletion.
       await fetchIncidents();
     } catch (err) {
       setError(err.message);
@@ -158,7 +211,7 @@ function App() {
     }
   }
 
-  // Opens the edit form with existing incident details.
+  // Opens the edit form with existing incident information.
   function startEditing(incident) {
     setEditingId(incident.id);
     setEditTitle(incident.title);
@@ -166,7 +219,7 @@ function App() {
     setEditError("");
   }
 
-  // Cancels editing.
+  // Cancels incident editing.
   function cancelEditing() {
     setEditingId(null);
     setEditTitle("");
@@ -207,10 +260,7 @@ function App() {
         throw new Error(data.detail || "Failed to update incident.");
       }
 
-      // Close edit form after successful update.
       cancelEditing();
-
-      // Refresh dashboard with updated information.
       await fetchIncidents();
     } catch (err) {
       setEditError(err.message);
@@ -227,7 +277,15 @@ function App() {
     );
   });
 
-  // Dashboard statistics.
+  // Filters logs by severity.
+  const visibleLogs = logs.filter((log) => {
+    return (
+      logLevelFilter === "all" ||
+      log.level === logLevelFilter
+    );
+  });
+
+  // Calculates incident statistics.
   const openCount = incidents.filter(
     (incident) => incident.status === "open"
   ).length;
@@ -238,6 +296,19 @@ function App() {
 
   const resolvedCount = incidents.filter(
     (incident) => incident.status === "resolved"
+  ).length;
+
+  // Calculates log statistics.
+  const errorLogCount = logs.filter(
+    (log) => log.level === "ERROR"
+  ).length;
+
+  const warningLogCount = logs.filter(
+    (log) => log.level === "WARNING"
+  ).length;
+
+  const criticalLogCount = logs.filter(
+    (log) => log.level === "CRITICAL"
   ).length;
 
   return (
@@ -262,6 +333,10 @@ function App() {
 
           <a className="nav-item" href="#incidents">
             <span>◈</span> Incidents
+          </a>
+
+          <a className="nav-item" href="#logs">
+            <span>▤</span> Application Logs
           </a>
 
           <a className="nav-item" href="#analysis">
@@ -295,7 +370,7 @@ function App() {
           </div>
         </header>
 
-        {/* Dashboard heading and buttons. */}
+        {/* Dashboard heading and actions. */}
         <section className="welcome-section">
           <div>
             <h2>System overview</h2>
@@ -307,10 +382,13 @@ function App() {
           <div className="dashboard-actions">
             <button
               className="refresh-button"
-              onClick={fetchIncidents}
-              disabled={loading}
+              onClick={() => {
+                fetchIncidents();
+                fetchLogs();
+              }}
+              disabled={loading || logsLoading}
             >
-              {loading ? "Loading..." : "↻ Refresh"}
+              {loading || logsLoading ? "Loading..." : "↻ Refresh"}
             </button>
 
             <button
@@ -392,15 +470,15 @@ function App() {
           </section>
         )}
 
-        {/* General error message. */}
+        {/* Displays incident errors. */}
         {error && (
           <div className="error-message" role="alert">
-            <strong>Error</strong>
+            <strong>Incident error</strong>
             <p>{error}</p>
           </div>
         )}
 
-        {/* Dashboard statistics. */}
+        {/* Incident statistics. */}
         <section className="summary-grid">
           <SummaryCard
             label="Total incidents"
@@ -473,9 +551,7 @@ function App() {
                   </tr>
                 ) : error ? (
                   <tr>
-                    <td colSpan="5">
-                      Incidents could not be loaded.
-                    </td>
+                    <td colSpan="5">Incidents could not be loaded.</td>
                   </tr>
                 ) : visibleIncidents.length === 0 ? (
                   <tr>
@@ -486,7 +562,6 @@ function App() {
                     <tr key={incident.id}>
                       {editingId === incident.id ? (
                         <td colSpan="5">
-                          {/* Inline incident editing form. */}
                           <form
                             className="edit-form"
                             onSubmit={(event) =>
@@ -500,7 +575,6 @@ function App() {
 
                               <input
                                 id={`edit-title-${incident.id}`}
-                                type="text"
                                 value={editTitle}
                                 onChange={(event) =>
                                   setEditTitle(event.target.value)
@@ -603,6 +677,130 @@ function App() {
             {loading
               ? "Loading incidents..."
               : `Showing ${visibleIncidents.length} of ${incidents.length} incidents`}
+          </div>
+        </section>
+
+        {/* Application logs monitoring section. */}
+        <section className="panel logs-panel" id="logs">
+          <div className="panel-header">
+            <div>
+              <h2>Application Logs</h2>
+              <p className="muted">
+                Monitor application events collected by your backend.
+              </p>
+            </div>
+
+            <div className="log-header-actions">
+              <select
+                value={logLevelFilter}
+                onChange={(event) => setLogLevelFilter(event.target.value)}
+                aria-label="Filter logs by level"
+              >
+                <option value="all">All levels</option>
+                <option value="INFO">INFO</option>
+                <option value="WARNING">WARNING</option>
+                <option value="ERROR">ERROR</option>
+                <option value="CRITICAL">CRITICAL</option>
+              </select>
+
+              <button
+                className="refresh-button"
+                onClick={fetchLogs}
+                disabled={logsLoading}
+              >
+                {logsLoading ? "Loading..." : "↻ Refresh Logs"}
+              </button>
+            </div>
+          </div>
+
+          {/* Log summary cards. */}
+          <div className="log-summary-grid">
+            <div className="log-summary-card">
+              <span>Total logs</span>
+              <strong>{logsLoading ? "—" : logs.length}</strong>
+            </div>
+
+            <div className="log-summary-card">
+              <span>Warnings</span>
+              <strong>{logsLoading ? "—" : warningLogCount}</strong>
+            </div>
+
+            <div className="log-summary-card">
+              <span>Errors</span>
+              <strong>{logsLoading ? "—" : errorLogCount}</strong>
+            </div>
+
+            <div className="log-summary-card">
+              <span>Critical</span>
+              <strong>{logsLoading ? "—" : criticalLogCount}</strong>
+            </div>
+          </div>
+
+          {/* Log loading and error messages. */}
+          {logsError && (
+            <div className="error-message" role="alert">
+              <strong>Logs error</strong>
+              <p>{logsError}</p>
+            </div>
+          )}
+
+          {/* Logs table. */}
+          <div className="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>LEVEL</th>
+                  <th>MESSAGE</th>
+                  <th>SOURCE</th>
+                  <th>TIMESTAMP</th>
+                  <th>ID</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {logsLoading ? (
+                  <tr>
+                    <td colSpan="5">Loading application logs...</td>
+                  </tr>
+                ) : logsError ? (
+                  <tr>
+                    <td colSpan="5">Application logs could not be loaded.</td>
+                  </tr>
+                ) : visibleLogs.length === 0 ? (
+                  <tr>
+                    <td colSpan="5">No logs found.</td>
+                  </tr>
+                ) : (
+                  visibleLogs.map((log) => (
+                    <tr key={log.id}>
+                      <td>
+                        <LogBadge level={log.level} />
+                      </td>
+
+                      <td>
+                        <strong>{log.message}</strong>
+                      </td>
+
+                      <td>{log.source}</td>
+
+                      <td className="muted">
+                        {formatDate(log.created_at)}
+                      </td>
+
+                      <td className="muted">
+                        LOG-{log.id}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="panel-footer">
+            {logsLoading
+              ? "Loading logs..."
+              : `Showing ${visibleLogs.length} of ${logs.length} logs`}
           </div>
         </section>
 
