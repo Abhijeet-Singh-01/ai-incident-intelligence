@@ -2,6 +2,8 @@ from fastapi import FastAPI
 
 from app.incidents import router as incidents_router
 
+from app.logs import router as logs_router
+
 app = FastAPI(title="AI INCIDENT INTELLIGENCE")
 
 # Imports middleware that controls cross-origin browser requests.
@@ -17,7 +19,7 @@ app.add_middleware(
 )
 
 app.include_router(incidents_router)
-
+app.include_router(logs_router)
 
 @app.get("/")
 def home():
