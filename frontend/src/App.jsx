@@ -2,10 +2,10 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 
-// The URL of our FastAPI backend.
+// FastAPI backend address.
 const API_URL = "http://127.0.0.1:8000";
 
-// Creates a reusable summary card.
+// Displays one dashboard summary card.
 function SummaryCard({ label, value, icon, color }) {
   return (
     <div className="summary-card">
@@ -13,68 +13,61 @@ function SummaryCard({ label, value, icon, color }) {
         <p className="muted">{label}</p>
         <h2>{value}</h2>
       </div>
-
-      <div className={`summary-icon ${color}`}>
-        {icon}
-      </div>
+      <div className={`summary-icon ${color}`}>{icon}</div>
     </div>
   );
 }
 
-// Displays a colored severity or status label.
+// Displays severity and status badges.
 function StatusBadge({ value }) {
-  return (
-    <span className={`badge ${value}`}>
-      {value}
-    </span>
-  );
+  return <span className={`badge ${value}`}>{value}</span>;
 }
 
-// Main dashboard component.
 function App() {
   // Stores incidents received from the backend.
   const [incidents, setIncidents] = useState([]);
 
-  // Tracks whether the API request is in progress.
+  // Controls loading and error messages.
   const [loading, setLoading] = useState(true);
-
-  // Stores an error message if the request fails.
   const [error, setError] = useState("");
 
-  // Stores the selected severity filter.
+  // Controls the severity filter.
   const [severityFilter, setSeverityFilter] = useState("all");
 
-  // Fetches incidents from FastAPI.
+  // Controls whether the create incident form is visible.
+  const [showForm, setShowForm] = useState(false);
+
+  // Stores the new incident form values.
+  const [newTitle, setNewTitle] = useState("");
+  const [newSeverity, setNewSeverity] = useState("low");
+
+  // Controls form submission.
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
+
+  // Fetches incidents from the FastAPI backend.
   async function fetchIncidents() {
     try {
-      // Shows the loading state and clears previous errors.
       setLoading(true);
       setError("");
 
-      // Requests the incidents from the backend.
       const response = await fetch(`${API_URL}/incidents`);
 
-      // Handles unsuccessful HTTP responses.
       if (!response.ok) {
         throw new Error(
           `Failed to fetch incidents. HTTP status: ${response.status}`
         );
       }
 
-      // Converts the JSON response into JavaScript data.
       const data = await response.json();
-
-      // Saves the received incidents in React state.
       setIncidents(data);
     } catch (err) {
-      // Displays a helpful message if the request fails.
       setError(
         err.message === "Failed to fetch"
           ? "Cannot connect to the backend. Make sure FastAPI is running."
           : err.message
       );
     } finally {
-      // Stops the loading indicator.
       setLoading(false);
     }
   }
@@ -84,7 +77,53 @@ function App() {
     fetchIncidents();
   }, []);
 
-  // Filters incidents by severity.
+  // Sends a new incident to the backend.
+  async function createIncident(event) {
+    event.preventDefault();
+
+    if (!newTitle.trim()) {
+      setCreateError("Please enter an incident title.");
+      return;
+    }
+
+    try {
+      setCreating(true);
+      setCreateError("");
+
+      const response = await fetch(`${API_URL}/incidents`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: newTitle.trim(),
+          severity: newSeverity,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.detail || "Failed to create incident."
+        );
+      }
+
+      // Reset the form after successful creation.
+      setNewTitle("");
+      setNewSeverity("low");
+      setShowForm(false);
+
+      // Refresh the incident list.
+      await fetchIncidents();
+    } catch (err) {
+      setCreateError(err.message);
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  // Filters incidents according to the selected severity.
   const visibleIncidents = incidents.filter((incident) => {
     return (
       severityFilter === "all" ||
@@ -92,28 +131,26 @@ function App() {
     );
   });
 
-  // Calculates the number of open incidents.
+  // Calculates dashboard statistics.
   const openCount = incidents.filter(
     (incident) => incident.status === "open"
   ).length;
 
-  // Calculates the number of critical incidents.
   const criticalCount = incidents.filter(
     (incident) => incident.severity === "critical"
   ).length;
 
-  // Calculates the number of resolved incidents.
   const resolvedCount = incidents.filter(
     (incident) => incident.status === "resolved"
   ).length;
 
   return (
     <div className="app-layout">
-      {/* Sidebar navigation */}
+
+      {/* Sidebar navigation. */}
       <aside className="sidebar">
         <div className="brand">
           <div className="brand-icon">AI</div>
-
           <div>
             <h2>IncidentIQ</h2>
             <p>Incident Intelligence</p>
@@ -146,8 +183,10 @@ function App() {
         </div>
       </aside>
 
-      {/* Main dashboard */}
+      {/* Main dashboard content. */}
       <main className="main-content" id="dashboard">
+
+        {/* Top navigation bar. */}
         <header className="topbar">
           <div>
             <p className="breadcrumb">Workspace / Overview</p>
@@ -160,6 +199,7 @@ function App() {
           </div>
         </header>
 
+        {/* Dashboard heading and action buttons. */}
         <section className="welcome-section">
           <div>
             <h2>System overview</h2>
@@ -168,27 +208,113 @@ function App() {
             </p>
           </div>
 
-          <button
-            className="refresh-button"
-            onClick={fetchIncidents}
-            disabled={loading}
-          >
-            {loading ? "Loading..." : "↻ Refresh"}
-          </button>
+          <div className="dashboard-actions">
+            <button
+              className="refresh-button"
+              onClick={fetchIncidents}
+              disabled={loading}
+            >
+              {loading ? "Loading..." : "↻ Refresh"}
+            </button>
+
+            <button
+              className="create-button"
+              onClick={() => {
+                setCreateError("");
+                setShowForm(true);
+              }}
+            >
+              + Create Incident
+            </button>
+          </div>
         </section>
 
-        {/* Shows an error if the backend request fails. */}
+        {/* Create incident form. */}
+        {showForm && (
+          <section className="panel create-panel">
+            <div className="panel-header">
+              <div>
+                <h2>Create New Incident</h2>
+                <p className="muted">
+                  Enter the incident details below.
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={createIncident}>
+              <div className="form-field">
+                <label htmlFor="incident-title">
+                  Incident Title
+                </label>
+
+                <input
+                  id="incident-title"
+                  type="text"
+                  placeholder="Example: Server response time increased"
+                  value={newTitle}
+                  onChange={(event) => setNewTitle(event.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="incident-severity">
+                  Severity
+                </label>
+
+                <select
+                  id="incident-severity"
+                  value={newSeverity}
+                  onChange={(event) => setNewSeverity(event.target.value)}
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+
+              {createError && (
+                <p className="form-error" role="alert">
+                  {createError}
+                </p>
+              )}
+
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="cancel-button"
+                  onClick={() => {
+                    setShowForm(false);
+                    setCreateError("");
+                  }}
+                  disabled={creating}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="create-button"
+                  disabled={creating}
+                >
+                  {creating ? "Creating..." : "Save Incident"}
+                </button>
+              </div>
+            </form>
+          </section>
+        )}
+
+        {/* Backend connection error. */}
         {error && (
           <div className="error-message" role="alert">
             <strong>Connection error</strong>
             <p>{error}</p>
-            <p>
-              Check that FastAPI is running at {API_URL}.
-            </p>
+            <p>Check that FastAPI is running at {API_URL}.</p>
           </div>
         )}
 
-        {/* Summary cards display counts from real API data. */}
+        {/* Dashboard statistics. */}
         <section className="summary-grid">
           <SummaryCard
             label="Total incidents"
@@ -219,7 +345,7 @@ function App() {
           />
         </section>
 
-        {/* Incident table */}
+        {/* Incident table. */}
         <section className="panel" id="incidents">
           <div className="panel-header">
             <div>
@@ -268,9 +394,7 @@ function App() {
                   </tr>
                 ) : visibleIncidents.length === 0 ? (
                   <tr>
-                    <td colSpan="4">
-                      No incidents found.
-                    </td>
+                    <td colSpan="4">No incidents found.</td>
                   </tr>
                 ) : (
                   visibleIncidents.map((incident) => (
@@ -304,6 +428,7 @@ function App() {
           </div>
         </section>
 
+        {/* Dashboard footer. */}
         <footer className="page-footer">
           AI Incident Intelligence · Connected to FastAPI
         </footer>
