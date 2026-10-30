@@ -658,3 +658,86 @@ tbody tr:hover {
     gap: 16px;
   }
 }
+
+
+.delete-button {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  padding: 7px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.delete-button:hover {
+  background: #fecaca;
+}
+
+
+/* Edit and delete button container */
+.form-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* edit button */
+.edit-button{
+  background: #dbeafe;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  padding: 7px 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.edit-button:hover{
+
+  background: #bfdbfe;
+
+}
+
+/* delete button */
+
+.delete-button{
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  padding: 7px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.delete-button:hover{
+  background: #fecaca;
+}
+
+/* Disabled buttons */
+.delete-button:disabled,
+.edit-button:disabled{
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* edit form layout */
+.edit-form{
+  padding: 15px;
+  background:#dc2626;
+  border-radius: 10px;
+
+}
+
+/* error message in forms */
+.form-error{
+  color: #dc2626;
+  margin-bottom: 15px;
+}
+
+/* responsive actions buttons */
+@media (max-width: 600){
+  .action-buttons{
+    flex-wrap: wrap;
+  }
+}

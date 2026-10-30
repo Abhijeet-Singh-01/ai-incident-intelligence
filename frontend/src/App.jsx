@@ -5,7 +5,7 @@ import "./App.css";
 // FastAPI backend address.
 const API_URL = "http://127.0.0.1:8000";
 
-// Displays one dashboard summary card.
+// Displays dashboard summary cards.
 function SummaryCard({ label, value, icon, color }) {
   return (
     <div className="summary-card">
@@ -31,21 +31,27 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Controls the severity filter.
+  // Controls severity filtering.
   const [severityFilter, setSeverityFilter] = useState("all");
 
-  // Controls whether the create incident form is visible.
+  // Controls the create incident form.
   const [showForm, setShowForm] = useState(false);
-
-  // Stores the new incident form values.
   const [newTitle, setNewTitle] = useState("");
   const [newSeverity, setNewSeverity] = useState("low");
-
-  // Controls form submission.
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
 
-  // Fetches incidents from the FastAPI backend.
+  // Controls incident deletion.
+  const [deletingId, setDeletingId] = useState(null);
+
+  // Controls incident editing.
+  const [editingId, setEditingId] = useState(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editSeverity, setEditSeverity] = useState("low");
+  const [updating, setUpdating] = useState(false);
+  const [editError, setEditError] = useState("");
+
+  // Fetches incidents from FastAPI.
   async function fetchIncidents() {
     try {
       setLoading(true);
@@ -54,9 +60,7 @@ function App() {
       const response = await fetch(`${API_URL}/incidents`);
 
       if (!response.ok) {
-        throw new Error(
-          `Failed to fetch incidents. HTTP status: ${response.status}`
-        );
+        throw new Error("Failed to fetch incidents.");
       }
 
       const data = await response.json();
@@ -64,7 +68,7 @@ function App() {
     } catch (err) {
       setError(
         err.message === "Failed to fetch"
-          ? "Cannot connect to the backend. Make sure FastAPI is running."
+          ? "Cannot connect to backend. Make sure FastAPI is running."
           : err.message
       );
     } finally {
@@ -72,12 +76,12 @@ function App() {
     }
   }
 
-  // Fetches incidents when the dashboard first loads.
+  // Loads incidents when the dashboard opens.
   useEffect(() => {
     fetchIncidents();
   }, []);
 
-  // Sends a new incident to the backend.
+  // Creates a new incident.
   async function createIncident(event) {
     event.preventDefault();
 
@@ -104,17 +108,15 @@ function App() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.detail || "Failed to create incident."
-        );
+        throw new Error(data.detail || "Failed to create incident.");
       }
 
-      // Reset the form after successful creation.
+      // Reset form after successful creation.
       setNewTitle("");
       setNewSeverity("low");
       setShowForm(false);
 
-      // Refresh the incident list.
+      // Refresh incident list.
       await fetchIncidents();
     } catch (err) {
       setCreateError(err.message);
@@ -123,7 +125,101 @@ function App() {
     }
   }
 
-  // Filters incidents according to the selected severity.
+  // Deletes an incident.
+  async function deleteIncident(incidentId) {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this incident?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setDeletingId(incidentId);
+      setError("");
+
+      const response = await fetch(
+        `${API_URL}/incidents/${incidentId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || "Failed to delete incident.");
+      }
+
+      // Refresh dashboard after deletion.
+      await fetchIncidents();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  // Opens the edit form with existing incident details.
+  function startEditing(incident) {
+    setEditingId(incident.id);
+    setEditTitle(incident.title);
+    setEditSeverity(incident.severity);
+    setEditError("");
+  }
+
+  // Cancels editing.
+  function cancelEditing() {
+    setEditingId(null);
+    setEditTitle("");
+    setEditSeverity("low");
+    setEditError("");
+  }
+
+  // Updates an existing incident.
+  async function updateIncident(event, incidentId) {
+    event.preventDefault();
+
+    if (!editTitle.trim()) {
+      setEditError("Incident title cannot be empty.");
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      setEditError("");
+
+      const response = await fetch(
+        `${API_URL}/incidents/${incidentId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: editTitle.trim(),
+            severity: editSeverity,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || "Failed to update incident.");
+      }
+
+      // Close edit form after successful update.
+      cancelEditing();
+
+      // Refresh dashboard with updated information.
+      await fetchIncidents();
+    } catch (err) {
+      setEditError(err.message);
+    } finally {
+      setUpdating(false);
+    }
+  }
+
+  // Filters incidents by severity.
   const visibleIncidents = incidents.filter((incident) => {
     return (
       severityFilter === "all" ||
@@ -131,7 +227,7 @@ function App() {
     );
   });
 
-  // Calculates dashboard statistics.
+  // Dashboard statistics.
   const openCount = incidents.filter(
     (incident) => incident.status === "open"
   ).length;
@@ -183,10 +279,10 @@ function App() {
         </div>
       </aside>
 
-      {/* Main dashboard content. */}
+      {/* Main dashboard. */}
       <main className="main-content" id="dashboard">
 
-        {/* Top navigation bar. */}
+        {/* Header. */}
         <header className="topbar">
           <div>
             <p className="breadcrumb">Workspace / Overview</p>
@@ -199,7 +295,7 @@ function App() {
           </div>
         </header>
 
-        {/* Dashboard heading and action buttons. */}
+        {/* Dashboard heading and buttons. */}
         <section className="welcome-section">
           <div>
             <h2>System overview</h2>
@@ -243,9 +339,7 @@ function App() {
 
             <form onSubmit={createIncident}>
               <div className="form-field">
-                <label htmlFor="incident-title">
-                  Incident Title
-                </label>
+                <label htmlFor="incident-title">Incident Title</label>
 
                 <input
                   id="incident-title"
@@ -258,9 +352,7 @@ function App() {
               </div>
 
               <div className="form-field">
-                <label htmlFor="incident-severity">
-                  Severity
-                </label>
+                <label htmlFor="incident-severity">Severity</label>
 
                 <select
                   id="incident-severity"
@@ -275,19 +367,14 @@ function App() {
               </div>
 
               {createError && (
-                <p className="form-error" role="alert">
-                  {createError}
-                </p>
+                <p className="form-error">{createError}</p>
               )}
 
               <div className="form-actions">
                 <button
                   type="button"
                   className="cancel-button"
-                  onClick={() => {
-                    setShowForm(false);
-                    setCreateError("");
-                  }}
+                  onClick={() => setShowForm(false)}
                   disabled={creating}
                 >
                   Cancel
@@ -305,12 +392,11 @@ function App() {
           </section>
         )}
 
-        {/* Backend connection error. */}
+        {/* General error message. */}
         {error && (
           <div className="error-message" role="alert">
-            <strong>Connection error</strong>
+            <strong>Error</strong>
             <p>{error}</p>
-            <p>Check that FastAPI is running at {API_URL}.</p>
           </div>
         )}
 
@@ -357,9 +443,7 @@ function App() {
 
             <select
               value={severityFilter}
-              onChange={(event) =>
-                setSeverityFilter(event.target.value)
-              }
+              onChange={(event) => setSeverityFilter(event.target.value)}
               aria-label="Filter incidents by severity"
             >
               <option value="all">All severities</option>
@@ -378,42 +462,136 @@ function App() {
                   <th>SEVERITY</th>
                   <th>STATUS</th>
                   <th>ID</th>
+                  <th>ACTIONS</th>
                 </tr>
               </thead>
 
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="4">Loading incidents...</td>
+                    <td colSpan="5">Loading incidents...</td>
                   </tr>
                 ) : error ? (
                   <tr>
-                    <td colSpan="4">
+                    <td colSpan="5">
                       Incidents could not be loaded.
                     </td>
                   </tr>
                 ) : visibleIncidents.length === 0 ? (
                   <tr>
-                    <td colSpan="4">No incidents found.</td>
+                    <td colSpan="5">No incidents found.</td>
                   </tr>
                 ) : (
                   visibleIncidents.map((incident) => (
                     <tr key={incident.id}>
-                      <td>
-                        <strong>{incident.title}</strong>
-                      </td>
+                      {editingId === incident.id ? (
+                        <td colSpan="5">
+                          {/* Inline incident editing form. */}
+                          <form
+                            className="edit-form"
+                            onSubmit={(event) =>
+                              updateIncident(event, incident.id)
+                            }
+                          >
+                            <div className="form-field">
+                              <label htmlFor={`edit-title-${incident.id}`}>
+                                Incident Title
+                              </label>
 
-                      <td>
-                        <StatusBadge value={incident.severity} />
-                      </td>
+                              <input
+                                id={`edit-title-${incident.id}`}
+                                type="text"
+                                value={editTitle}
+                                onChange={(event) =>
+                                  setEditTitle(event.target.value)
+                                }
+                                required
+                              />
+                            </div>
 
-                      <td>
-                        <StatusBadge value={incident.status} />
-                      </td>
+                            <div className="form-field">
+                              <label htmlFor={`edit-severity-${incident.id}`}>
+                                Severity
+                              </label>
 
-                      <td className="muted">
-                        INC-{incident.id}
-                      </td>
+                              <select
+                                id={`edit-severity-${incident.id}`}
+                                value={editSeverity}
+                                onChange={(event) =>
+                                  setEditSeverity(event.target.value)
+                                }
+                              >
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                                <option value="critical">Critical</option>
+                              </select>
+                            </div>
+
+                            {editError && (
+                              <p className="form-error">{editError}</p>
+                            )}
+
+                            <div className="form-actions">
+                              <button
+                                type="button"
+                                className="cancel-button"
+                                onClick={cancelEditing}
+                                disabled={updating}
+                              >
+                                Cancel
+                              </button>
+
+                              <button
+                                type="submit"
+                                className="create-button"
+                                disabled={updating}
+                              >
+                                {updating ? "Updating..." : "Save Changes"}
+                              </button>
+                            </div>
+                          </form>
+                        </td>
+                      ) : (
+                        <>
+                          <td>
+                            <strong>{incident.title}</strong>
+                          </td>
+
+                          <td>
+                            <StatusBadge value={incident.severity} />
+                          </td>
+
+                          <td>
+                            <StatusBadge value={incident.status} />
+                          </td>
+
+                          <td className="muted">
+                            INC-{incident.id}
+                          </td>
+
+                          <td>
+                            <div className="action-buttons">
+                              <button
+                                className="edit-button"
+                                onClick={() => startEditing(incident)}
+                              >
+                                Edit
+                              </button>
+
+                              <button
+                                className="delete-button"
+                                onClick={() => deleteIncident(incident.id)}
+                                disabled={deletingId === incident.id}
+                              >
+                                {deletingId === incident.id
+                                  ? "Deleting..."
+                                  : "Delete"}
+                              </button>
+                            </div>
+                          </td>
+                        </>
+                      )}
                     </tr>
                   ))
                 )}
