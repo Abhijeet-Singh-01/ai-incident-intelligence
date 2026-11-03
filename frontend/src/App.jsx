@@ -81,6 +81,13 @@ function App() {
   // Controls log severity filtering.
   const [logLevelFilter, setLogLevelFilter] = useState("all");
 
+  // Stores system metrics received from FastAPI.
+  const [metrics, setMetrics] = useState(null);
+
+  // Controls metrics loading and errors.
+  const [metricsLoading, setMetricsLoading] = useState(true);
+  const [metricsError, setMetricsError] = useState("");
+
   // Fetches incidents from FastAPI.
   async function fetchIncidents() {
     try {
@@ -131,10 +138,36 @@ function App() {
     }
   }
 
-  // Loads incidents and logs when dashboard opens.
+  // Fetches the latest system metrics from FastAPI.
+  async function fetchMetrics() {
+    try {
+      setMetricsLoading(true);
+      setMetricsError("");
+
+      const response = await fetch(`${API_URL}/metrics/latest`);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch system metrics.");
+      }
+
+      const data = await response.json();
+      setMetrics(data);
+    } catch (err) {
+      setMetricsError(
+        err.message === "Failed to fetch"
+          ? "Cannot connect to the metrics API."
+          : err.message
+      );
+    } finally {
+      setMetricsLoading(false);
+    }
+  }
+
+  // Loads incidents, logs and metrics when dashboard opens.
   useEffect(() => {
     fetchIncidents();
     fetchLogs();
+    fetchMetrics();
   }, []);
 
   // Creates a new incident.
@@ -385,10 +418,13 @@ function App() {
               onClick={() => {
                 fetchIncidents();
                 fetchLogs();
+                fetchMetrics();
               }}
-              disabled={loading || logsLoading}
+              disabled={loading || logsLoading || metricsLoading}
             >
-              {loading || logsLoading ? "Loading..." : "↻ Refresh"}
+              {loading || logsLoading || metricsLoading
+                ? "Loading..."
+                : "↻ Refresh"}
             </button>
 
             <button
@@ -507,6 +543,77 @@ function App() {
             icon="✓"
             color="green"
           />
+        </section>
+
+        {/* System metrics monitoring section. */}
+        <section className="panel" id="monitoring">
+          <div className="panel-header">
+            <div>
+              <h2>System Monitoring</h2>
+              <p className="muted">
+                Monitor CPU, memory and disk usage.
+              </p>
+            </div>
+
+            <button
+              className="refresh-button"
+              onClick={fetchMetrics}
+              disabled={metricsLoading}
+            >
+              {metricsLoading ? "Loading..." : "↻ Refresh Metrics"}
+            </button>
+          </div>
+
+          {metricsError && (
+            <div className="error-message" role="alert">
+              <strong>Metrics error</strong>
+              <p>{metricsError}</p>
+            </div>
+          )}
+
+          {metricsLoading ? (
+            <p>Loading system metrics...</p>
+          ) : metrics ? (
+            <>
+              <div className="summary-grid">
+                <SummaryCard
+                  label="CPU Usage"
+                  value={`${metrics.cpu_usage}%`}
+                  icon="▣"
+                  color="blue"
+                />
+
+                <SummaryCard
+                  label="RAM Usage"
+                  value={`${metrics.memory_usage}%`}
+                  icon="▤"
+                  color="orange"
+                />
+
+                <SummaryCard
+                  label="Disk Usage"
+                  value={`${metrics.disk_usage}%`}
+                  icon="◉"
+                  color="red"
+                />
+
+                <SummaryCard
+                  label="Available RAM"
+                  value={`${metrics.memory_available_gb} GB`}
+                  icon="✓"
+                  color="green"
+                />
+              </div>
+
+              <p className="muted">
+                Last collected: {formatDate(metrics.created_at)}
+              </p>
+            </>
+          ) : (
+            <p>
+              No metrics available. Collect metrics from the backend first.
+            </p>
+          )}
         </section>
 
         {/* Incident table. */}
@@ -764,7 +871,9 @@ function App() {
                   </tr>
                 ) : logsError ? (
                   <tr>
-                    <td colSpan="5">Application logs could not be loaded.</td>
+                    <td colSpan="5">
+                      Application logs could not be loaded.
+                    </td>
                   </tr>
                 ) : visibleLogs.length === 0 ? (
                   <tr>
