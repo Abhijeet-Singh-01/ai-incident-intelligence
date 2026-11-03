@@ -1,4 +1,3 @@
-
 # Imports SQLAlchemy column types and database functions.
 from sqlalchemy import Column, Integer, String, Text, DateTime, func
 
@@ -6,9 +5,13 @@ from sqlalchemy import Column, Integer, String, Text, DateTime, func
 from app.database.connection import Base
 
 
+# import floating-point and date/time database types.
+
+from sqlalchemy import Float, DateTime, func
+
+
 # Database model for application incidents.
 class Incident(Base):
-
     # PostgreSQL table name.
     __tablename__ = "incidents"
 
@@ -27,7 +30,6 @@ class Incident(Base):
 
 # Database model for application logs.
 class Log(Base):
-
     # PostgreSQL table name.
     __tablename__ = "logs"
 
@@ -45,7 +47,45 @@ class Log(Base):
 
     # Automatically records when the log is created.
     created_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        nullable=False
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+ 
+
+
+
+
+# Database model for system monitoring metrics.
+class Metric(Base):
+    # PostgreSQL table name.
+    __tablename__ = "metrics"
+
+    # Unique metric record ID.
+    id = Column(Integer, primary_key=True, index=True)
+
+    # CPU utilization percentage.
+    cpu_usage = Column(Float, nullable=False)
+
+    # RAM utilization percentage.
+    memory_usage = Column(Float, nullable=False)
+
+    # Total RAM in GB.
+    memory_total_gb = Column(Float, nullable=False)
+
+    # Available RAM in GB.
+    memory_available_gb = Column(Float, nullable=False)
+
+    # Disk utilization percentage.
+    disk_usage = Column(Float, nullable=False)
+
+    # Total disk capacity in GB.
+    disk_total_gb = Column(Float, nullable=False)
+
+    # Available disk space in GB.
+    disk_free_gb = Column(Float, nullable=False)
+
+    # Automatically records when metrics are collected.
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
     )
